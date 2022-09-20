@@ -1,0 +1,401 @@
+import { React, useState } from "react";
+import Data from "../Data";
+import Posts from "../Data2"
+import CardMedia from "@mui/material/CardMedia";
+import AspectRatio from "@mui/joy/AspectRatio";
+import Avatar from "@mui/joy/Avatar";
+import Box from "@mui/joy/Box";
+import Card from "@mui/joy/Card";
+import CardOverflow from "@mui/joy/CardOverflow";
+import Link from "@mui/joy/Link";
+import IconButton from "@mui/joy/IconButton";
+import Input from "@mui/joy/Input";
+import Typography from "@mui/joy/Typography";
+import MoreHoriz from "@mui/icons-material/MoreHoriz";
+import FavoriteBorder from "@mui/icons-material/FavoriteBorder";
+import ReplyIcon from "@mui/icons-material/Reply";
+import ModeCommentOutlined from "@mui/icons-material/ModeCommentOutlined";
+import ShareSharpIcon from "@mui/icons-material/ShareSharp";
+import SendIcon from "@mui/icons-material/Send";
+import { styled } from "@mui/material/styles";
+import CardContent from "@mui/material/CardContent";
+import CardActions from "@mui/material/CardActions";
+import Collapse from "@mui/material/Collapse";
+import Button from "@mui/material/Button";
+import { useNavigate } from "react-router-dom";
+
+const ExpandMore = styled((props) => {
+  const { expand, ...other } = props;
+  return <IconButton {...other} />;
+})(({ theme, expand }) => ({
+  transform: !expand ? "rotate(0deg)" : "rotate(180deg)",
+  color: !expand ? "black" : "rgb(28, 188, 199)",
+  transition: theme.transitions.create("transform", {
+    duration: theme.transitions.duration.shortest,
+  }),
+}));
+
+let expandedIndex = [];
+
+export default function DronzUpPost({ setSelectedId }) {
+  let navigate = useNavigate();
+  const [commentData, setCommentData] = useState(Data);
+  const [isCommentBoxRefresh, setIsCommentBoxRefresh] = useState(false);
+  const [isLikeBoxRefresh, setIsLikeBoxRefresh] = useState(false);
+  const [expanded, setExpanded] = useState(true);
+
+  const commentbuttonhandle = (id) => {
+    commentData.map((items) => {
+      if (items.id === id) {
+        items.active_comment = !items.active_comment;
+        items.expand = !items.expand;
+      }
+      return null;
+    });
+    setCommentData(commentData);
+    setIsCommentBoxRefresh(!isCommentBoxRefresh);
+  };
+
+  const likebuttonhandle = (id) => {
+    commentData.map((items) => {
+      if (items.id === id) {
+        items.like_post = !items.like_post;
+      }
+      return null;
+    });
+    setCommentData(commentData);
+    setIsLikeBoxRefresh(!isLikeBoxRefresh);
+    console.log(Posts);
+  };
+  const commentLikebuttonhandle = (id) => {
+    commentData.map((items) => {
+      items.post_comment.map((item) => {
+        if (item.id === id) {
+          item.like_post = !item.like_post;
+        }
+        return null;
+      });
+      return null;
+    });
+
+    setCommentData(commentData);
+    setIsLikeBoxRefresh(!isLikeBoxRefresh);
+  };
+
+  const handleExpandClick = (id) => {
+    if (expandedIndex.includes(id)) {
+      setExpanded(true);
+      expandedIndex = [];
+    } else {
+      expandedIndex = [];
+      setExpanded(false);
+      expandedIndex = [id];
+      setExpanded(true);
+    }
+  };
+  const priviewPage = (id) => {
+    console.log(id);
+    navigate("../preview");
+    setSelectedId(id);
+  };
+
+  return (
+    <div className="postBody" style={{ width: "40%" }}>
+      {commentData.map((items, id) => (
+        <Card
+          key={id}
+          id={id}
+          variant="outlined"
+          sx={{
+            minWidth: 330,
+            "--Card-radius": (theme) => theme.vars.radius.xs,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", pb: 1.5, gap: 1 }}>
+            <Box
+              sx={{
+                position: "relative",
+                "&:before": {
+                  content: '""',
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  bottom: 0,
+                  right: 0,
+                  m: "-2px",
+                  borderRadius: "50%",
+                },
+              }}
+            >
+              <Avatar
+                src={items.profilePIC}
+                sx={{
+                  width: "6vh",
+                  height: "6vh",
+                }}
+              >
+                <CardMedia
+                  component="img"
+                  height="100%"
+                  width="100%"
+                  image={items.profilePIC}
+                  alt="Paella dish"
+                />
+              </Avatar>
+            </Box>
+            <Typography component="span" fontWeight="lg">
+              {items.username}
+            </Typography>
+            <IconButton
+              variant="plain"
+              color="neutral"
+              size="sm"
+              sx={{ ml: "auto" }}
+            >
+              <MoreHoriz />
+            </IconButton>
+          </Box>
+          <CardOverflow>
+            <AspectRatio objectFit="contain">
+              <CardMedia
+                component={items.mediaType}
+                height="100%"
+                width="100%"
+                src={items.photo}
+                controls
+                alt="Paella dish"
+                onClick={(e) => {
+                  priviewPage(items.id);
+                }}
+              />
+            </AspectRatio>
+          </CardOverflow>
+          <Box sx={{ display: "flex", alignItems: "center", mx: -1, my: 1 }}>
+            <Box sx={{ width: 0, display: "flex", gap: 0.5 }}>
+              <IconButton variant="plain" color="neutral" size="sm">
+                <FavoriteBorder
+                  onClick={(e) => {
+                    likebuttonhandle(items.id);
+                  }}
+                  sx={items.like_post ? { color: "red" } : { color: "black" }}
+                />
+              </IconButton>
+              <CardActions disableSpacing>
+                <ExpandMore
+                  expand={expandedIndex.includes(id)}
+                  onClick={() => {
+                    handleExpandClick(id);
+                  }}
+                  aria-expanded={expanded}
+                  aria-label="show more"
+                >
+                  <ModeCommentOutlined
+                    onClick={(e) => {
+                      commentbuttonhandle(items.id);
+                    }}
+                  />
+                </ExpandMore>
+              </CardActions>
+              <IconButton variant="plain" color="neutral" size="sm">
+                <ShareSharpIcon />
+              </IconButton>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                mx: "auto",
+              }}
+            >
+              {[...Array(5)].map((_, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    borderRadius: "50%",
+                    width: `max(${6 - index}px, 3px)`,
+                    height: `max(${6 - index}px, 3px)`,
+                    bgcolor:
+                      index === 0 ? "primary.solidBg" : "background.level3",
+                  }}
+                />
+              ))}
+            </Box>
+            <Box
+              sx={{ width: 0, display: "flex", flexDirection: "row-reverse" }}
+            >
+              <IconButton
+                variant="plain"
+                color="neutral"
+                size="sm"
+              ></IconButton>
+            </Box>
+          </Box>
+          <Link
+            component="button"
+            underline="none"
+            fontSize="sm"
+            fontWeight="lg"
+            textColor="text.primary"
+          >
+            8.1M Likes
+          </Link>
+          <Typography variant="caption" fontSize="sm">
+            {items.caption}
+          </Typography>
+          <Link
+            component="button"
+            underline="none"
+            fontSize="sm"
+            // startDecorator="…"
+            sx={{ color: "text.tertiary" }}
+          >
+            {/* more */}
+          </Link>
+          <Link
+            component="button"
+            underline="none"
+            fontSize="10px"
+            sx={{ color: "text.tertiary", my: 0.5 }}
+          >
+            {items.date}
+          </Link>
+          <div>
+            <Collapse
+              in={expandedIndex.includes(id)}
+              timeout="auto"
+              unmountOnExit
+            >
+              <CardContent>
+                {items.post_comment.slice(0, 3).map((coms, id) => {
+                  return (
+                    <Typography
+                      component="span"
+                      key={id}
+                      id={id}
+                      sx={{ marginTop: "10px" }}
+                    >
+                      <Typography
+                        component="span"
+                        sx={{
+                          display: "flex",
+                        }}
+                      >
+                        <Avatar size="sm" src={coms.photo} />
+                        <Typography
+                          component={"span"}
+                          variant={"body2"}
+                          sx={{
+                            backgroundColor: "rgb(28, 188, 199)",
+                            width: "60%",
+                            marginTop: "0",
+                            marginLeft: "10px",
+                            borderRadius: "5px",
+                          }}
+                        >
+                          <span style={{ fontSize: "12px" }}>
+                            {coms.username}
+                          </span>
+                          <span style={{ float: "right", fontSize: "12px" }}>
+                            {items.date}
+                          </span>
+                          <br />
+                          <div
+                            style={{
+                              marginTop: "10px",
+                              marginBottom: "10px",
+                              color: "white",
+                              fontSize: "2vh",
+                            }}
+                          >
+                            {coms.comment}
+                          </div>
+                          <span style={{ fontSize: "12px" }}>122k</span>
+                        </Typography>
+                      </Typography>
+                      <Typography>
+                        <IconButton
+                          sx={{ marginLeft: "40px" }}
+                          variant="plain"
+                          color="neutral"
+                          size="sm"
+                        >
+                          <FavoriteBorder
+                            onClick={(e) => {
+                              commentLikebuttonhandle(coms.id);
+                            }}
+                            sx={
+                              coms.like_post
+                                ? { color: "red" }
+                                : { color: "black" }
+                            }
+                          />
+                        </IconButton>
+                        <IconButton
+                          sx={{}}
+                          variant="plain"
+                          color="neutral"
+                          size="sm"
+                        >
+                          <ReplyIcon
+                            // onClick={(e) => {
+                            //   likebuttonhandle(items.id);
+                            // }}
+                            sx={
+                              // items.like_post
+                              //   ? { color: "red" }
+                              //   :
+                              { color: "black" }
+                            }
+                          />
+                        </IconButton>
+                      </Typography>
+                    </Typography>
+                  );
+                })}
+              </CardContent>
+              <Typography variant="button" style={{ marginLeft: "50px" }}>
+                <Button
+                  variant="text"
+                  onClick={(e) => {
+                    priviewPage(items.id);
+                  }}
+                >
+                  ...More
+                </Button>
+              </Typography>
+            </Collapse>
+          </div>
+          <CardOverflow
+            sx={{
+              p: "var(--Card-padding)",
+              display: "flex",
+            }}
+          >
+            <IconButton
+              size="sm"
+              variant="plain"
+              color="neutral"
+              sx={{ ml: -1 }}
+            >
+              <Avatar src={items.profilePIC} />
+            </IconButton>
+            <Input
+              variant="plain"
+              size="sm"
+              placeholder="Add a comment…"
+              sx={{
+                flexGrow: 1,
+                mr: 1,
+                "--Input-focusedThickness": "0px",
+              }}
+            />
+            <Link underline="none" role="button">
+              <SendIcon />
+            </Link>
+          </CardOverflow>
+        </Card>
+      ))}
+    </div>
+  );
+}
