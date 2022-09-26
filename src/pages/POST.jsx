@@ -1,13 +1,11 @@
-import { React, useState } from "react";
+import { React, useEffect, useState } from "react";
 import PostHeader from "../components/PostHeader";
 import WriteComment from "../components/WriteComment";
-import Posts from "../data2";
 import CardMedia from "@mui/material/CardMedia";
 import AspectRatio from "@mui/joy/AspectRatio";
 import Avatar from "@mui/joy/Avatar";
 import Box from "@mui/joy/Box";
 import Card from "@mui/joy/Card";
-import CardOverflow from "@mui/joy/CardOverflow";
 import Link from "@mui/joy/Link";
 import IconButton from "@mui/joy/IconButton";
 import Typography from "@mui/joy/Typography";
@@ -22,6 +20,9 @@ import Collapse from "@mui/material/Collapse";
 import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";
 import ReactHlsPlayer from "react-hls-player";
+import Videojs from "../components/video";
+import { ImageGrid } from "react-fb-image-video-grid";
+import VisibilitySensor from "react-visibility-sensor";
 
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
@@ -37,9 +38,9 @@ const ExpandMore = styled((props) => {
 let expandedIndex = [];
 const user = 9;
 
-export default function DronzUpPost({ setSelectedId }) {
+export default function DronzUpPost({ setSelectedId, setDATA }) {
   let navigate = useNavigate();
-  const [commentData, setCommentData] = useState(Posts);
+  const [commentData, setCommentData] = useState([]);
   const [isCommentBoxRefresh, setIsCommentBoxRefresh] = useState(false);
   const [isLikeBoxRefresh, setIsLikeBoxRefresh] = useState(false);
   const [expanded, setExpanded] = useState(true);
@@ -56,7 +57,7 @@ export default function DronzUpPost({ setSelectedId }) {
     setIsCommentBoxRefresh(!isCommentBoxRefresh);
   };
 
-  const likebuttonhandle = (id) => {
+  const likebuttonhandle = (id, e) => {
     commentData.map((items) => {
       if (items["postId"] === id) {
         if (items["likes"].includes(user)) {
@@ -107,8 +108,26 @@ export default function DronzUpPost({ setSelectedId }) {
   const priviewPage = (id) => {
     navigate("../preview");
     setSelectedId(id);
+    setDATA(commentData);
+    console.log(id);
+    console.log(commentData);
     window.scrollTo(0, 0);
   };
+  useEffect(() => {
+    fetch("https://coursebuddy.org/ws-dronzup/post?userId=2&isFirstPage=true", {
+      method: "GET",
+      headers: {
+        deviceType: "ios",
+        buildVersion: "800",
+      },
+    })
+      .then((data) => {
+        return data.json();
+      })
+      .then((data) => {
+        setCommentData(data.posts);
+      });
+  }, []);
 
   return (
     <div className="postBody">
@@ -123,48 +142,66 @@ export default function DronzUpPost({ setSelectedId }) {
           }}
         >
           <PostHeader imgUrl={items.profilePhotoUrl} name={items.username} />
-          <CardOverflow>
-            <div>
-              {(() => {
-                if (items.medias[0] == null) {
-                  return <div>{items.textContent}</div>;
-                } else if (items.medias[0].mediaType === "PHOTO") {
+
+          {items.medias.length > 0 && (
+            <ImageGrid showModal={false}>
+              {items.medias.map((i) => {
+                if (i.mediaType === "PHOTO") {
                   return (
-                    <div>
-                      <AspectRatio objectFit="contain">
-                        <CardMedia
-                          component="img"
-                          height="100%"
-                          width="100%"
-                          src={items.medias[0].mediaUrl}
-                          controls
-                          alt="Paella dish"
-                          onClick={(e) => {
-                            priviewPage(id);
-                          }}
-                        />
-                      </AspectRatio>
-                    </div>
-                  );
-                } else if (items.medias[0].mediaType === "VIDEO") {
-                  return (
-                    <div>
-                      <AspectRatio objectFit="contain">
-                        <ReactHlsPlayer
-                          src={items.medias[0].mediaUrl}
-                          autoPlay={false}
-                          controls={true}
-                          
-                        />
-                      </AspectRatio>
-                    </div>
+                    <AspectRatio objectFit="contain">
+                      <CardMedia
+                        onClick={(e) => {
+                          priviewPage(id);
+                        }}
+                        component="img"
+                        height="100%"
+                        width="100%"
+                        src={i.mediaUrl}
+                        controls
+                        alt="Paella dish"
+                      />
+                    </AspectRatio>
                   );
                 } else {
-                  return console.log(items.medias[0].mediaType);
+                  return (
+                    <VisibilitySensor>
+                      {({ isVisible }) => {
+                        const videoJsOptions = {
+                          muted: true,
+                          autoplay: isVisible ? true : false,
+                          playbackRates: [0.5, 1, 1.25, 1.5, 2],
+                          width: 720,
+                          height: 300,
+                          controls: true,
+                          sources: [
+                            {
+                              src: i.mediaUrl,
+                              type: "application/x-mpegURL",
+                            },
+                          ],
+                        };
+                        return (
+                          <AspectRatio objectFit="contain">
+                            <div>
+                              <Videojs {...videoJsOptions} />
+                            </div>
+                          </AspectRatio>
+                        );
+                      }}
+                    </VisibilitySensor>
+                  );
                 }
-              })()}
-            </div>
-          </CardOverflow>
+              })}
+            </ImageGrid>
+          )}
+          <div>
+            {(() => {
+              if (items.medias.length === 0) {
+                return <div>{items.textContent}</div>;
+              }
+            })()}
+          </div>
+
           <Box sx={{ display: "flex", alignItems: "center", mx: -1, my: 1 }}>
             <Box sx={{ width: 0, display: "flex", gap: 0.5 }}>
               <IconButton variant="plain" color="neutral" size="sm">
